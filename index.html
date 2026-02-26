@@ -228,6 +228,18 @@
         .legend-dot.partial { background: #ffc800; }
         .legend-dot.missed { background: #ff6464; }
         
+        .chart-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 1rem;
+        }
+        
         @media (max-width: 600px) {
             body { padding: 1rem; }
             h1 { font-size: 1.8rem; }
@@ -235,6 +247,7 @@
             .weekly-grid { grid-template-columns: repeat(7, 1fr); font-size: 0.6rem; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -364,6 +377,13 @@
                 <div class="legend-item"><div class="legend-dot missed"></div> Missed</div>
             </div>
         </div>
+        
+        <div class="habits-section chart-section">
+            <h2>📊 Weekly Progress</h2>
+            <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -434,6 +454,77 @@
                     el.textContent = '✗';
                 }
             });
+        });
+        
+        // Chart.js - Weekly Progress
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        const weeklyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'Qi Gong',
+                        data: habitData.qigong.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                        borderColor: '#00d4ff',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Meditation',
+                        data: habitData.meditation.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                        backgroundColor: 'rgba(124, 58, 237, 0.7)',
+                        borderColor: '#7c3aed',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Push-ups',
+                        data: habitData.pushups.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 25 : 0),
+                        backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#888',
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#888' }
+                    },
+                    y: {
+                        stacked: true,
+                        max: 300,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: {
+                            color: '#888',
+                            callback: function(value) {
+                                if (value === 0) return 'None';
+                                if (value === 100) return '1 habit';
+                                if (value === 200) return '2 habits';
+                                if (value === 300) return '3 habits';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
         });
     </script>
 </body>
