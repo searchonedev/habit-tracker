@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paulo's Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .quote {
+            font-style: italic;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.1);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .habits-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .habits-section h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            color: #aaa;
+        }
+        
+        .habit-row {
+            display: flex;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .habit-row:last-child {
+            border-bottom: none;
+        }
+        
+        .habit-icon {
+            font-size: 1.8rem;
+            width: 50px;
+        }
+        
+        .habit-info {
+            flex: 1;
+        }
+        
+        .habit-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+        
+        .habit-streak {
+            font-size: 0.85rem;
+            color: #00d4ff;
+        }
+        
+        .progress-bar {
+            width: 150px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-fill.qigong {
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+        }
+        
+        .progress-fill.meditation {
+            background: linear-gradient(90deg, #7c3aed, #d946ef);
+        }
+        
+        .progress-fill.pushups {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+        }
+        
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .day-column {
+            text-align: center;
+        }
+        
+        .day-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .day-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        
+        .day-slot {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .day-slot.done {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+        
+        .day-slot.partial {
+            background: rgba(255, 200, 0, 0.2);
+            border-color: #ffc800;
+        }
+        
+        .day-slot.missed {
+            background: rgba(255, 100, 100, 0.1);
+            border-color: #ff6464;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        
+        .legend-dot.done { background: #00ff88; }
+        .legend-dot.partial { background: #ffc800; }
+        .legend-dot.missed { background: #ff6464; }
+        
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .weekly-grid { grid-template-columns: repeat(7, 1fr); font-size: 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔥 Paulo's Habit Tracker</h1>
+            <p class="quote">"You do not rise to the level of your goals. You fall to the level of your systems."</p>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🧘</div>
+                <div class="stat-value" id="totalDays">0</div>
+                <div class="stat-label">Total Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="completionRate">0%</div>
+                <div class="stat-label">This Week</div>
+            </div>
+        </div>
+        
+        <div class="habits-section">
+            <h2>📈 Habit Progress</h2>
+            
+            <div class="habit-row">
+                <div class="habit-icon">🧘</div>
+                <div class="habit-info">
+                    <div class="habit-name">Qi Gong</div>
+                    <div class="habit-streak" id="qigongStreak">0 day streak</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill qigong" id="qigongProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="habit-row">
+                <div class="habit-icon">🧠</div>
+                <div class="habit-info">
+                    <div class="habit-name">Meditation (15+ min)</div>
+                    <div class="habit-streak" id="meditationStreak">0 day streak</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill meditation" id="meditationProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="habit-row">
+                <div class="habit-icon">💪</div>
+                <div class="habit-info">
+                    <div class="habit-name">100 Push-ups</div>
+                    <div class="habit-streak" id="pushupsStreak">0 day streak</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill pushups" id="pushupsProgress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="habits-section" style="margin-top: 2rem;">
+            <h2>📅 This Week</h2>
+            <div class="weekly-grid">
+                <div class="day-column">
+                    <div class="day-label">Mon</div>
+                    <div class="day-slots">
+                        <div class="day-slot done" id="mon-qigong">✓</div>
+                        <div class="day-slot missed" id="mon-meditation">✗</div>
+                        <div class="day-slot done" id="mon-pushups">✓</div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Tue</div>
+                    <div class="day-slots">
+                        <div class="day-slot" id="tue-qigong"></div>
+                        <div class="day-slot" id="tue-meditation"></div>
+                        <div class="day-slot" id="tue-pushups"></div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Wed</div>
+                    <div class="day-slots">
+                        <div class="day-slot" id="wed-qigong"></div>
+                        <div class="day-slot" id="wed-meditation"></div>
+                        <div class="day-slot" id="wed-pushups"></div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Thu</div>
+                    <div class="day-slots">
+                        <div class="day-slot done" id="thu-qigong">✓</div>
+                        <div class="day-slot done" id="thu-meditation">✓</div>
+                        <div class="day-slot partial" id="thu-pushups">25</div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Fri</div>
+                    <div class="day-slots">
+                        <div class="day-slot" id="fri-qigong"></div>
+                        <div class="day-slot" id="fri-meditation"></div>
+                        <div class="day-slot" id="fri-pushups"></div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Sat</div>
+                    <div class="day-slots">
+                        <div class="day-slot" id="sat-qigong"></div>
+                        <div class="day-slot" id="sat-meditation"></div>
+                        <div class="day-slot" id="sat-pushups"></div>
+                    </div>
+                </div>
+                <div class="day-column">
+                    <div class="day-label">Sun</div>
+                    <div class="day-slots">
+                        <div class="day-slot" id="sun-qigong"></div>
+                        <div class="day-slot" id="sun-meditation"></div>
+                        <div class="day-slot" id="sun-pushups"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot done"></div> Done</div>
+                <div class="legend-item"><div class="legend-dot partial"></div> Partial</div>
+                <div class="legend-item"><div class="legend-dot missed"></div> Missed</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Habit data from memory/habits.md
+        const habitData = {
+            qigong: {
+                currentStreak: 2,
+                bestStreak: 2,
+                thisWeek: [true, false, false, true, false, false, false]
+            },
+            meditation: {
+                currentStreak: 2,
+                bestStreak: 2,
+                thisWeek: [false, false, false, true, false, false, false]
+            },
+            pushups: {
+                currentStreak: 1,
+                bestStreak: 1,
+                thisWeek: [true, false, false, 'partial', false, false, false]
+            }
+        };
+        
+        // Calculate stats
+        let totalDays = 0;
+        let currentStreak = 0;
+        let weekComplete = 0;
+        
+        Object.values(habitData).forEach(habit => {
+            totalDays += habit.currentStreak;
+            currentStreak = Math.max(currentStreak, habit.currentStreak);
+            habit.thisWeek.forEach(day => {
+                if (day === true) weekComplete++;
+                else if (day === 'partial') weekComplete += 0.5;
+            });
+        });
+        
+        const completionRate = Math.round((weekComplete / 21) * 100); // 3 habits * 7 days
+        
+        // Update UI
+        document.getElementById('totalDays').textContent = totalDays;
+        document.getElementById('currentStreak').textContent = currentStreak;
+        document.getElementById('completionRate').textContent = completionRate + '%';
+        
+        // Update habit rows
+        document.getElementById('qigongStreak').textContent = habitData.qigong.currentStreak + ' day streak';
+        document.getElementById('meditationStreak').textContent = habitData.meditation.currentStreak + ' day streak';
+        document.getElementById('pushupsStreak').textContent = habitData.pushups.currentStreak + ' day streak';
+        
+        document.getElementById('qigongProgress').style.width = (habitData.qigong.currentStreak / 7 * 100) + '%';
+        document.getElementById('meditationProgress').style.width = (habitData.meditation.currentStreak / 7 * 100) + '%';
+        document.getElementById('pushupsProgress').style.width = (habitData.pushups.currentStreak / 7 * 100) + '%';
+        
+        // Update weekly grid
+        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const habits = ['qigong', 'meditation', 'pushups'];
+        
+        days.forEach((day, dayIndex) => {
+            habits.forEach(habit => {
+                const el = document.getElementById(`${day}-${habit}`);
+                const status = habitData[habit].thisWeek[dayIndex];
+                if (status === true) {
+                    el.classList.add('done');
+                    el.textContent = '✓';
+                } else if (status === 'partial') {
+                    el.classList.add('partial');
+                } else if (status === false) {
+                    el.classList.add('missed');
+                    el.textContent = '✗';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
