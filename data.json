@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-02-28T22:18:00Z",
+  "lastUpdated": "2026-02-28T22:25:00Z",
   "habits": {
     "qigong": {
       "name": "Qi Gong",
@@ -16,11 +16,12 @@
       "thisWeek": [false, false, true, true, false, true, false]
     },
     "pushups": {
-      "name": "100 Push-ups",
+      "name": "Push-ups",
       "icon": "💪",
+      "goal": 100,
       "currentStreak": 1,
       "bestStreak": 1,
-      "thisWeek": [true, false, true, "partial", false, true, false]
+      "thisWeek": [100, false, 0, 25, false, 10, false]
     }
   }
 }
