@@ -438,22 +438,30 @@
                 currentStreak = Math.max(currentStreak, habit.currentStreak);
                 
                 habit.thisWeek.forEach((day, dayIndex) => {
-                    if (day === true) weekComplete++;
-                    else if (day === 'partial') weekComplete += 0.5;
-                });
-                
-                // Update weekly grid
-                days.forEach((day, dayIndex) => {
-                    const el = document.getElementById(`${day}-${key}`);
-                    const status = habit.thisWeek[dayIndex];
-                    if (status === true) {
-                        el.classList.add('done');
-                        el.textContent = '✓';
-                    } else if (status === 'partial') {
-                        el.classList.add('partial');
-                    } else if (status === false) {
-                        el.classList.add('missed');
-                        el.textContent = '✗';
+                    let value = 0;
+                    if (typeof day === 'number') {
+                        value = day;
+                    } else if (day === true) {
+                        value = 100;
+                    } else if (day === 'partial') {
+                        value = 50;
+                    }
+                    
+                    if (value > 0) weekComplete += value / 100;
+                    
+                    // Update weekly grid
+                    const el = document.getElementById(`${days[dayIndex]}-${key}`);
+                    if (el) {
+                        if (value === 100) {
+                            el.classList.add('done');
+                            el.textContent = '✓';
+                        } else if (value > 0 && value < 100) {
+                            el.classList.add('partial');
+                            el.textContent = value;
+                        } else if (value === 0) {
+                            el.classList.add('missed');
+                            el.textContent = '✗';
+                        }
                     }
                 });
             });
@@ -497,7 +505,7 @@
                         },
                         {
                             label: 'Push-ups',
-                            data: habits.pushups.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                            data: habits.pushups.thisWeek.map(v => typeof v === 'number' ? v : v === true ? 100 : v === 'partial' ? 50 : 0),
                             backgroundColor: 'rgba(245, 158, 11, 0.7)',
                             borderColor: '#f59e0b',
                             borderWidth: 1,
