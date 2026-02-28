@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paulo's Habit Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -240,6 +241,13 @@
             margin-top: 1rem;
         }
         
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 0.75rem;
+            margin-top: 2rem;
+        }
+        
         @media (max-width: 600px) {
             body { padding: 1rem; }
             h1 { font-size: 1.8rem; }
@@ -247,7 +255,6 @@
             .weekly-grid { grid-template-columns: repeat(7, 1fr); font-size: 0.6rem; }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -259,17 +266,17 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">🧘</div>
-                <div class="stat-value" id="totalDays">0</div>
+                <div class="stat-value" id="totalDays">-</div>
                 <div class="stat-label">Total Days</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⚡</div>
-                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-value" id="currentStreak">-</div>
                 <div class="stat-label">Current Streak</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">📊</div>
-                <div class="stat-value" id="completionRate">0%</div>
+                <div class="stat-value" id="completionRate">-</div>
                 <div class="stat-label">This Week</div>
             </div>
         </div>
@@ -278,10 +285,10 @@
             <h2>📈 Habit Progress</h2>
             
             <div class="habit-row">
-                <div class="habit-icon">🧘</div>
+                <div class="habit-icon" id="qigongIcon">🧘</div>
                 <div class="habit-info">
-                    <div class="habit-name">Qi Gong</div>
-                    <div class="habit-streak" id="qigongStreak">0 day streak</div>
+                    <div class="habit-name" id="qigongName">Qi Gong</div>
+                    <div class="habit-streak" id="qigongStreak">- day streak</div>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill qigong" id="qigongProgress" style="width: 0%"></div>
@@ -289,10 +296,10 @@
             </div>
             
             <div class="habit-row">
-                <div class="habit-icon">🧠</div>
+                <div class="habit-icon" id="meditationIcon">🧠</div>
                 <div class="habit-info">
-                    <div class="habit-name">Meditation (15+ min)</div>
-                    <div class="habit-streak" id="meditationStreak">0 day streak</div>
+                    <div class="habit-name" id="meditationName">Meditation (15+ min)</div>
+                    <div class="habit-streak" id="meditationStreak">- day streak</div>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill meditation" id="meditationProgress" style="width: 0%"></div>
@@ -300,10 +307,10 @@
             </div>
             
             <div class="habit-row">
-                <div class="habit-icon">💪</div>
+                <div class="habit-icon" id="pushupsIcon">💪</div>
                 <div class="habit-info">
-                    <div class="habit-name">100 Push-ups</div>
-                    <div class="habit-streak" id="pushupsStreak">0 day streak</div>
+                    <div class="habit-name" id="pushupsName">100 Push-ups</div>
+                    <div class="habit-streak" id="pushupsStreak">- day streak</div>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill pushups" id="pushupsProgress" style="width: 0%"></div>
@@ -317,9 +324,9 @@
                 <div class="day-column">
                     <div class="day-label">Mon</div>
                     <div class="day-slots">
-                        <div class="day-slot done" id="mon-qigong">✓</div>
-                        <div class="day-slot missed" id="mon-meditation">✗</div>
-                        <div class="day-slot done" id="mon-pushups">✓</div>
+                        <div class="day-slot" id="mon-qigong"></div>
+                        <div class="day-slot" id="mon-meditation"></div>
+                        <div class="day-slot" id="mon-pushups"></div>
                     </div>
                 </div>
                 <div class="day-column">
@@ -341,9 +348,9 @@
                 <div class="day-column">
                     <div class="day-label">Thu</div>
                     <div class="day-slots">
-                        <div class="day-slot done" id="thu-qigong">✓</div>
-                        <div class="day-slot done" id="thu-meditation">✓</div>
-                        <div class="day-slot partial" id="thu-pushups">50</div>
+                        <div class="day-slot" id="thu-qigong"></div>
+                        <div class="day-slot" id="thu-meditation"></div>
+                        <div class="day-slot" id="thu-pushups"></div>
                     </div>
                 </div>
                 <div class="day-column">
@@ -384,148 +391,161 @@
                 <canvas id="weeklyChart"></canvas>
             </div>
         </div>
+        
+        <div class="last-updated" id="lastUpdated"></div>
     </div>
     
     <script>
-        // Habit data from memory/habits.md
-        const habitData = {
-            qigong: {
-                currentStreak: 3,
-                bestStreak: 3,
-                thisWeek: [true, false, true, true, false, true, false]
-            },
-            meditation: {
-                currentStreak: 3,
-                bestStreak: 3,
-                thisWeek: [false, false, true, true, false, true, false]
-            },
-            pushups: {
-                currentStreak: 1,
-                bestStreak: 1,
-                thisWeek: [true, false, true, 'partial', false, true, false]
+        // Fetch data from JSON
+        const DATA_URL = 'https://raw.githubusercontent.com/searchonedev/habit-tracker/master/data.json';
+        
+        async function loadData() {
+            try {
+                const response = await fetch(DATA_URL);
+                const data = await response.json();
+                renderDashboard(data);
+            } catch (error) {
+                console.error('Failed to load data:', error);
             }
-        };
+        }
         
-        // Calculate stats
-        let totalDays = 0;
-        let currentStreak = 0;
-        let weekComplete = 0;
-        
-        Object.values(habitData).forEach(habit => {
-            totalDays += habit.currentStreak;
-            currentStreak = Math.max(currentStreak, habit.currentStreak);
-            habit.thisWeek.forEach(day => {
-                if (day === true) weekComplete++;
-                else if (day === 'partial') weekComplete += 0.5;
-            });
-        });
-        
-        const completionRate = Math.round((weekComplete / 21) * 100); // 3 habits * 7 days
-        
-        // Update UI
-        document.getElementById('totalDays').textContent = totalDays;
-        document.getElementById('currentStreak').textContent = currentStreak;
-        document.getElementById('completionRate').textContent = completionRate + '%';
-        
-        // Update habit rows
-        document.getElementById('qigongStreak').textContent = habitData.qigong.currentStreak + ' day streak';
-        document.getElementById('meditationStreak').textContent = habitData.meditation.currentStreak + ' day streak';
-        document.getElementById('pushupsStreak').textContent = habitData.pushups.currentStreak + ' day streak';
-        
-        document.getElementById('qigongProgress').style.width = (habitData.qigong.currentStreak / 7 * 100) + '%';
-        document.getElementById('meditationProgress').style.width = (habitData.meditation.currentStreak / 7 * 100) + '%';
-        document.getElementById('pushupsProgress').style.width = (habitData.pushups.currentStreak / 7 * 100) + '%';
-        
-        // Update weekly grid
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const habits = ['qigong', 'meditation', 'pushups'];
-        
-        days.forEach((day, dayIndex) => {
-            habits.forEach(habit => {
-                const el = document.getElementById(`${day}-${habit}`);
-                const status = habitData[habit].thisWeek[dayIndex];
-                if (status === true) {
-                    el.classList.add('done');
-                    el.textContent = '✓';
-                } else if (status === 'partial') {
-                    el.classList.add('partial');
-                } else if (status === false) {
-                    el.classList.add('missed');
-                    el.textContent = '✗';
-                }
-            });
-        });
-        
-        // Chart.js - Weekly Progress
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        const weeklyChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [
-                    {
-                        label: 'Qi Gong',
-                        data: habitData.qigong.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
-                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
-                        borderColor: '#00d4ff',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'Meditation',
-                        data: habitData.meditation.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
-                        backgroundColor: 'rgba(124, 58, 237, 0.7)',
-                        borderColor: '#7c3aed',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'Push-ups',
-                        data: habitData.pushups.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
-                        backgroundColor: 'rgba(245, 158, 11, 0.7)',
-                        borderColor: '#f59e0b',
-                        borderWidth: 1,
-                        borderRadius: 4
+        function renderDashboard(data) {
+            const habits = data.habits;
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const habitKeys = ['qigong', 'meditation', 'pushups'];
+            
+            // Update last updated
+            const lastUpdated = new Date(data.lastUpdated);
+            document.getElementById('lastUpdated').textContent = 
+                'Last updated: ' + lastUpdated.toLocaleDateString() + ' ' + lastUpdated.toLocaleTimeString();
+            
+            // Calculate stats
+            let totalDays = 0;
+            let currentStreak = 0;
+            let weekComplete = 0;
+            
+            // Update habit rows
+            habitKeys.forEach(key => {
+                const habit = habits[key];
+                const streak = Math.max(habit.currentStreak, 1);
+                
+                document.getElementById(key + 'Icon').textContent = habit.icon;
+                document.getElementById(key + 'Name').textContent = habit.name;
+                document.getElementById(key + 'Streak').textContent = habit.currentStreak + ' day streak';
+                document.getElementById(key + 'Progress').style.width = (streak / 7 * 100) + '%';
+                
+                totalDays += habit.currentStreak;
+                currentStreak = Math.max(currentStreak, habit.currentStreak);
+                
+                habit.thisWeek.forEach((day, dayIndex) => {
+                    if (day === true) weekComplete++;
+                    else if (day === 'partial') weekComplete += 0.5;
+                });
+                
+                // Update weekly grid
+                days.forEach((day, dayIndex) => {
+                    const el = document.getElementById(`${day}-${key}`);
+                    const status = habit.thisWeek[dayIndex];
+                    if (status === true) {
+                        el.classList.add('done');
+                        el.textContent = '✓';
+                    } else if (status === 'partial') {
+                        el.classList.add('partial');
+                    } else if (status === false) {
+                        el.classList.add('missed');
+                        el.textContent = '✗';
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#888',
-                            padding: 20,
-                            usePointStyle: true
+                });
+            });
+            
+            // Update stats
+            document.getElementById('totalDays').textContent = totalDays;
+            document.getElementById('currentStreak').textContent = currentStreak;
+            document.getElementById('completionRate').textContent = Math.round((weekComplete / 21) * 100) + '%';
+            
+            // Update chart
+            renderChart(habits);
+        }
+        
+        let chart = null;
+        
+        function renderChart(habits) {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            
+            if (chart) chart.destroy();
+            
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Qi Gong',
+                            data: habits.qigong.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                            backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Meditation',
+                            data: habits.meditation.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                            backgroundColor: 'rgba(124, 58, 237, 0.7)',
+                            borderColor: '#7c3aed',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Push-ups',
+                            data: habits.pushups.thisWeek.map(v => v === true ? 100 : v === 'partial' ? 50 : 0),
+                            backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 4
                         }
-                    }
+                    ]
                 },
-                scales: {
-                    x: {
-                        stacked: true,
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#888' }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#888',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
                     },
-                    y: {
-                        stacked: true,
-                        max: 300,
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: {
-                            color: '#888',
-                            callback: function(value) {
-                                if (value === 0) return 'None';
-                                if (value === 100) return '1 habit';
-                                if (value === 200) return '2 habits';
-                                if (value === 300) return '3 habits';
-                                return value;
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888' }
+                        },
+                        y: {
+                            stacked: true,
+                            max: 300,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: '#888',
+                                callback: function(value) {
+                                    if (value === 0) return 'None';
+                                    if (value === 100) return '1 habit';
+                                    if (value === 200) return '2 habits';
+                                    if (value === 300) return '3 habits';
+                                    return value;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+        
+        // Load on page load
+        loadData();
     </script>
 </body>
 </html>
