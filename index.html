@@ -190,12 +190,28 @@
             .then(data => {
                 const habits = data.habits;
                 
-                // Update streaks
-                const maxStreak = Math.max(
-                    habits.qigong.currentStreak,
-                    habits.meditation.currentStreak,
-                    habits.pushups.currentStreak
-                );
+                // Calculate consecutive streak (working backwards from end of week)
+                function calcConsecutiveStreak(thisWeek, isPushups) {
+                    let streak = 0;
+                    // Start from Friday (index 4), go backwards
+                    for (let i = 4; i >= 0; i--) {
+                        if (isPushups) {
+                            if (thisWeek[i] > 0) streak++;
+                            else break;
+                        } else {
+                            if (thisWeek[i] === true) streak++;
+                            else break;
+                        }
+                    }
+                    return streak;
+                }
+                
+                // Current streak = consecutive days up to (and including) Friday
+                const qigongStreak = calcConsecutiveStreak(habits.qigong.thisWeek, false);
+                const meditationStreak = calcConsecutiveStreak(habits.meditation.thisWeek, false);
+                const pushupsStreak = calcConsecutiveStreak(habits.pushups.thisWeek, true);
+                
+                const maxStreak = Math.max(qigongStreak, meditationStreak, pushupsStreak);
                 const maxBest = Math.max(
                     habits.qigong.bestStreak,
                     habits.meditation.bestStreak,
@@ -205,21 +221,28 @@
                 document.getElementById('currentStreak').textContent = maxStreak + ' days';
                 document.getElementById('bestStreak').textContent = maxBest + ' days';
                 
-                // Calculate this week (index 0 = Monday)
-                const thisWeek = habits.qigong.thisWeek;
-                const daysDone = thisWeek.filter(d => d === true).length;
-                const completionRate = Math.round((daysDone / 7) * 100);
+                // This week completion
+                let daysDone = 0;
+                ['qigong', 'meditation', 'pushups'].forEach(h => {
+                    const isPushups = h === 'pushups';
+                    habits[h].thisWeek.forEach((val, i) => {
+                        if (i <= 4) { // Mon-Fri
+                            if (isPushups ? val > 0 : val === true) daysDone++;
+                        }
+                    });
+                });
+                const completionRate = Math.round((daysDone / 15) * 100); // 3 habits * 5 days
                 document.getElementById('completionRate').textContent = completionRate + '%';
                 
                 // Update habit rows
-                document.getElementById('qigongStreak').textContent = habits.qigong.currentStreak + ' day streak';
-                document.getElementById('meditationStreak').textContent = habits.meditation.currentStreak + ' day streak';
-                document.getElementById('pushupsStreak').textContent = habits.pushups.currentStreak + ' day streak';
+                document.getElementById('qigongStreak').textContent = qigongStreak + ' day streak';
+                document.getElementById('meditationStreak').textContent = meditationStreak + ' day streak';
+                document.getElementById('pushupsStreak').textContent = pushupsStreak + ' day streak';
                 
-                // Progress bars (max 7 days)
-                document.getElementById('qigongProgress').style.width = (habits.qigong.currentStreak / 7 * 100) + '%';
-                document.getElementById('meditationProgress').style.width = (habits.meditation.currentStreak / 7 * 100) + '%';
-                document.getElementById('pushupsProgress').style.width = (Math.min(habits.pushups.currentStreak, 100) / 100 * 100) + '%';
+                // Progress bars
+                document.getElementById('qigongProgress').style.width = (qigongStreak / 7 * 100) + '%';
+                document.getElementById('meditationProgress').style.width = (meditationStreak / 7 * 100) + '%';
+                document.getElementById('pushupsProgress').style.width = (Math.min(pushupsStreak, 7) / 7 * 100) + '%';
                 
                 // Update weekly grid
                 const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -230,7 +253,6 @@
                         const el = document.getElementById(`${day}-${habit}`);
                         const status = habits[habit].thisWeek[dayIndex];
                         if (habit === 'pushups') {
-                            // Pushups: number or 0
                             if (status > 0) {
                                 el.classList.add(status >= 100 ? 'done' : 'partial');
                                 el.textContent = status;
@@ -238,7 +260,6 @@
                                 el.classList.add('missed');
                             }
                         } else {
-                            // Qi Gong & Meditation: boolean
                             if (status === true) {
                                 el.classList.add('done');
                                 el.textContent = '✓';
@@ -249,7 +270,6 @@
                     });
                 });
                 
-                // Last updated
                 const date = new Date(data.lastUpdated);
                 document.getElementById('lastUpdated').textContent = 'Last updated: ' + date.toLocaleDateString();
             })
