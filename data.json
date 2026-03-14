@@ -1,19 +1,19 @@
 {
-  "lastUpdated": "2026-03-13T18:44:00Z",
+  "lastUpdated": "2026-03-14T04:05:00Z",
   "habits": {
     "qigong": {
       "name": "Qi Gong",
       "icon": "🧘",
       "currentStreak": 3,
       "bestStreak": 3,
-      "thisWeek": [false, true, true, true, true, false, false]
+      "thisWeek": [false, true, true, true, true, true, false]
     },
     "meditation": {
       "name": "Meditation (15+ min)",
       "icon": "🧠",
       "currentStreak": 3,
       "bestStreak": 3,
-      "thisWeek": [false, true, true, true, true, false, false]
+      "thisWeek": [false, true, true, true, true, true, false]
     },
     "pushups": {
       "name": "Push-ups",
@@ -21,7 +21,7 @@
       "goal": 100,
       "currentStreak": 3,
       "bestStreak": 3,
-      "thisWeek": [0, 10, 50, 0, 50, 0, 0]
+      "thisWeek": [0, 10, 50, 0, 75, 0, 0]
     }
   }
 }
